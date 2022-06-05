@@ -1,0 +1,126 @@
+﻿@page "/AddPlayer"
+@using WebApplication1.Models
+@using BlazorApplication.Services
+@inject ITeamService TeamService 
+@inject IPlayerService PlayerService
+@inject NavigationManager NavMgr
+
+
+<div class="box">
+    <h3>AddPlayer</h3>
+    <EditForm Model="@newPlayerItem" OnValidSubmit="@AddPlayerAsync">
+        <DataAnnotationsValidator/>
+        <ValidationSummary/>
+        <div class="form-group field">
+            <span>
+                <label>Shirt Number:</label>
+            </span>
+            <span>
+                <InputNumber @bind-Value="newPlayerItem.ShirtNumber"/>
+            </span>
+        </div>
+        <div class="form-group field">
+            <span>
+
+                <label> Name:</label>
+            </span>
+            <span>
+                <InputTextArea rows="4" @bind-Value="newPlayerItem.Name"/>
+            </span>
+        </div>
+        <div class="form-group field">
+            <span>
+                <label>Goals this season:</label>
+            </span>
+            <span>
+                <InputNumber @bind-Value="newPlayerItem.GoalsThisSeason"/>
+            </span>
+        </div>
+        <div class="form-group field">
+            <span>
+                <label>Salary</label>
+            </span>
+            <span>
+                <InputNumber @bind-Value="newPlayerItem.Salary"/>
+            </span>
+        </div>
+
+        <div class="form-group field">
+            <span>
+                <label>Position:</label>
+            </span>
+            <span>
+                <InputTextArea rows="4" @bind-Value="newPlayerItem.Position"/>
+            </span>
+        </div>
+        <div class="form-group field">
+            <span>
+                <label>Team:</label>
+            </span>
+            <span>
+                <select @bind="_selectedteam">      
+                    <option selected> Choose team </option>
+                    @if (_allTeams != null) {
+                        @foreach (var team in _allTeams) {
+                            <option> @team.TeamName</option>
+                        }
+                    }
+
+                </select>
+            </span>
+        </div>
+        <p class="actions">
+            <button class="acceptbtn" type="submit">Create</button>
+        </p>
+    </EditForm>
+    @if (!string.IsNullOrEmpty(errorLabel)) {
+        <label>@errorLabel</label>
+    }
+    @if (showModal) {
+        <Modal>
+            <p>You have successfully added a new player item. You should be very proud of yourself</p>
+            <button @onclick="@Proceed">Wonderful</button>
+        </Modal>
+    }
+</div>
+
+
+<h3>AddPlayer</h3>
+
+@code {
+    private Player newPlayerItem = new Player();
+    private string errorLabel = string.Empty;
+    private List<Team>? _allTeams;
+    private string? _selectedteam;
+    private bool showModal;
+
+    protected override async Task OnInitializedAsync() {
+        try {
+            _allTeams = await TeamService.GetAllTeamAsync();
+        }
+        catch (Exception e) {
+            errorLabel = e.Message;
+        }
+    }
+
+    private async Task AddPlayerAsync() {
+        try {
+            if (_selectedteam == null) {
+                errorLabel = "Select a team ";
+                return;
+            }
+            await PlayerService.AddPlayerAsync(newPlayerItem, _selectedteam);
+            _selectedteam = null;
+            showModal = true;
+        }
+        catch (Exception e) {
+            errorLabel = e.Message;
+        }
+    }
+
+    private void Proceed() {
+        showModal = false;
+        NavMgr.NavigateTo("/Teams");
+    }
+
+}

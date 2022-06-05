@@ -1,0 +1,81 @@
+﻿@page "/AddTeam"
+@using BlazorApplication.Services
+@using Microsoft.AspNetCore.Components
+@using WebApplication1.Models
+
+@inject ITeamService TeamService  
+@inject NavigationManager NavMgr
+
+<div class="box">
+    <h3>AddTeam</h3>
+    <EditForm Model="@newTeamItem" OnValidSubmit="@AddNewTeam">
+        <DataAnnotationsValidator/>
+        <ValidationSummary/>
+        <div class="form-group field">
+            <span>
+                <label>Ranking:</label>
+            </span>
+            <span>
+                <InputNumber @bind-Value="newTeamItem.Ranking"/>
+            </span>
+        </div>
+        <div class="form-group field">
+            <span>
+                <label>Team Name:</label>
+            </span>
+            <span>
+                <InputTextArea rows="4" @bind-Value="newTeamItem.TeamName"/>
+            </span>
+        </div>
+
+        <div class="form-group field">
+            <span>
+                <label>Coach Name:</label>
+            </span>
+            <span>
+                <InputTextArea rows="4" @bind-Value="newTeamItem.NameOfCoach"/>
+            </span>
+        </div>
+        <p class="actions">
+            <button class="acceptbtn" type="submit">Create</button>
+        </p>
+    </EditForm>
+    @if (!string.IsNullOrEmpty(errorLabel)) {
+        <label>@errorLabel</label>
+    }
+    @if (showModal) {
+        <Modal>
+            <p>You have successfully added a new team item. You should be very proud of yourself</p>
+            <button @onclick="@Proceed">Wonderful</button>
+        </Modal>
+    }
+</div>
+
+
+@code {
+
+    private Team newTeamItem = new Team();
+    private string errorLabel = String.Empty;
+    private bool showModal;
+
+
+
+    private async Task AddNewTeam() {
+
+        try {
+            errorLabel = "";
+            await TeamService.AddAsync(newTeamItem);
+            showModal = true;
+            newTeamItem = new Team();
+        }
+        catch (Exception e) {
+            errorLabel = e.Message;
+        }
+    }
+    private void Proceed()
+    {
+        showModal = false;
+        NavMgr.NavigateTo("/Teams");
+    }
+
+}
