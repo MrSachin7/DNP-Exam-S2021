@@ -1,0 +1,148 @@
+﻿@page "/TeamsAndPlayers"
+
+@using UIElements
+@using WebApplication1.Models
+@using BlazorApplication.Services
+@inject NavigationManager navMgr   
+@inject IPlayerService PlayerService 
+@inject ITeamService TeamService
+
+<h3>Todos</h3>
+
+<div class="filterbar">
+    <div class="filterscontainer">
+        <label class="funnel" @onclick="OpenCloseFilters"> Filter :</label>
+        @if (doShowFilters) {
+            <div class="filter">
+                <div>
+                    <label>Rating:</label>
+                </div>
+                <div>
+                    <input type="number" class="owneridfield" @bind="ratingToSearch" min="0"/>
+                </div>
+            </div>
+            <div class="filter">
+                <div>
+                    <label style="text-align: center">Team name</label>
+                </div>
+                <div>
+                    <input type="text" @bind="titleToSearch" placeholder="team name"/>
+                    <button onclick="@Filter"> Search</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (_teamsToShow == null) {
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else if (!_teamsToShow!.Any()) {
+    <p>
+        <em>No todos matching your search criteria</em>
+    </p>
+}
+else {
+    @foreach (var item in _teamsToShow!) {
+        <p> @item.TeamName, coached by @item.NameOfCoach , ranking : @item.Ranking</p>
+        <br/>
+        <p>Players :</p>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Shirt Number</th>
+                <th>Salary</th>
+                <th>Goals this season</th>
+                <th>Position</th>
+                <th>Remove</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var player in item.Players) {
+                <tr>
+                    <td> @player.Name</td>
+                    <td> @player.ShirtNumber</td>
+                    <td> @player.Salary</td>
+                    <td> @player.GoalsThisSeason</td>
+                    <td> @player.Position</td>
+                    <td>
+                        <label @onclick="@(() => RemovePlayer(@player.Name, player.ShirtNumber))" style="cursor:pointer; color: red; font-weight: bold">
+                            &#x2717;
+                        </label>
+                    </td>
+                </tr>
+            }   
+            </tbody>
+        </table>  
+        <br/>
+        <br/>
+    }
+}
+@if (!string.IsNullOrEmpty(errorLabel)) {
+    <label style="color: red">@errorLabel</label>
+}
+
+@if (showModal) {
+    <Modal>
+    </Modal>
+}
+@code {
+    private List<Team>? _teamsToShow, _allTeams;
+
+    private bool? ratingFilter;
+    private bool? teamNameFilter;
+
+    private string errorLabel = string.Empty;
+    private bool showModal;
+    private bool doShowFilters;
+    private string titleToSearch = string.Empty;
+    private int ratingToSearch;
+
+
+    protected override async Task OnInitializedAsync() {
+        try {
+            _allTeams = await TeamService.GetAllTeamAsync();
+            _teamsToShow = _allTeams;
+        }
+        catch (Exception e) {
+            errorLabel = e.Message;
+        }
+    }
+
+
+    private async Task RemovePlayer(string playerName, int shirtNumber) {
+
+        errorLabel = string.Empty;
+        var playerFromDb = await PlayerService.RemovePlayerAsync(playerName, shirtNumber);
+        foreach (var team in _allTeams) {
+            Player? player = team.Players.FirstOrDefault(player1 => player1.Name.Equals(playerFromDb.Name) && player1.ShirtNumber == playerFromDb.ShirtNumber);
+            if (player !=null) {
+                team.Players.Remove(player);
+                break;
+            }
+        }
+    }
+
+    private async Task Filter() {
+        try {
+            _teamsToShow =   await TeamService.GetTeamsByFilter(ratingToSearch, titleToSearch);
+        }
+        catch (Exception e) {
+            errorLabel = e.Message;
+        }
+    }
+    private void OpenCloseFilters()
+    {
+        doShowFilters = !doShowFilters;
+        if (!doShowFilters)
+        {
+            ratingFilter = null;
+            teamNameFilter = null;
+            _teamsToShow = _allTeams;
+        }
+    }
+
+}

@@ -15,6 +15,17 @@ public class PlayerHttpClient : IPlayerService {
         HttpResponseMessage responseMessage = await client.PostAsync($"http://localhost:5006/Players/{selectedteam}", content);
         string response = await        GetResponseContentFromResponseMessageAndThrowAppropriateException(responseMessage);
     }
+
+    public async Task<Player> RemovePlayerAsync(string playerName, int shirtNumber) {
+        using HttpClient client = new HttpClient();
+        HttpResponseMessage responseMessage = await client.DeleteAsync($"http://localhost:5006/Players/{playerName}/{shirtNumber}");
+        string response = await  GetResponseContentFromResponseMessageAndThrowAppropriateException(responseMessage);
+        Player player =  GetDeserialized<Player>(response);
+        return player;
+
+
+    }
+
     private async Task<string> GetResponseContentFromResponseMessageAndThrowAppropriateException(
         HttpResponseMessage responseMessage) {
         string responseContent = await responseMessage.Content.ReadAsStringAsync();
@@ -23,5 +34,11 @@ public class PlayerHttpClient : IPlayerService {
         }
 
         return responseContent;
+    }
+    private T GetDeserialized<T>(string jsonFormat) {
+        T obj = JsonSerializer.Deserialize<T>(jsonFormat, new JsonSerializerOptions() {
+            PropertyNameCaseInsensitive = true
+        }) !;
+        return obj;
     }
 }

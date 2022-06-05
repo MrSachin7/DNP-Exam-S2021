@@ -26,6 +26,14 @@ public class TeamHttpClient : ITeamService {
 
     }
 
+    public async Task<List<Team>?> GetTeamsByFilter(int ratingToSearch, string titleToSearch) {
+        using HttpClient client = new HttpClient();
+        HttpResponseMessage responseMessage = await client.GetAsync($"http://localhost:5006/Teams?teamName={titleToSearch}&&ranking={ratingToSearch}");
+        String responseContent = await GetResponseContentFromResponseMessageAndThrowAppropriateException(responseMessage);
+        List<Team> allTeams = GetDeserialized<List<Team>>(responseContent);
+        return allTeams;
+    }
+
     private T GetDeserialized<T>(string jsonFormat) {
         T obj = JsonSerializer.Deserialize<T>(jsonFormat, new JsonSerializerOptions() {
             PropertyNameCaseInsensitive = true

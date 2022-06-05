@@ -56,7 +56,7 @@ public class TeamsController : ControllerBase {
         //     return StatusCode(500, e.Message);
         // }
         try {
-            IQueryable<Team> queryable = _context.Teams;
+            IQueryable<Team> queryable = _context.Teams.Include(team => team.Players);
 
             if (ranking != null) {
                 queryable = queryable.Where(team => team.Ranking <= ranking);
